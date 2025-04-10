@@ -74,7 +74,24 @@
             <CheckIcon class="h-5 w-5" />
           </div>
 
-          <img :src="service.image" :alt="service.title" class="w-full h-64 object-cover" />
+          <!-- Imagen principal con indicador de galería si hay más de una imagen -->
+          <div class="relative">
+            <img
+                :src="getPrimaryImage(service)"
+                :alt="service.title"
+                class="w-full h-64 object-cover cursor-pointer"
+                @click="openGallery(service)"
+            />
+            <div
+                v-if="service.images.length > 1"
+                class="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full flex items-center"
+                @click.stop="openGallery(service)"
+            >
+              <ImageIcon class="h-3 w-3 mr-1" />
+              {{ service.images.length }}
+            </div>
+          </div>
+
           <div class="p-6">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-xl font-bold text-gray-800">{{ service.title }}</h3>
@@ -141,17 +158,88 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Galería de Imágenes -->
+    <div
+        v-if="showGallery && galleryService"
+        class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+    >
+      <div class="relative w-full max-w-4xl">
+        <!-- Botón de cerrar -->
+        <button
+            @click="showGallery = false"
+            class="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+        >
+          <XIcon class="h-8 w-8" />
+        </button>
+
+        <!-- Imagen actual -->
+        <div class="relative">
+          <img
+              :src="galleryService.images[currentImageIndex].url"
+              :alt="galleryService.title"
+              class="w-full max-h-[80vh] object-contain"
+          />
+
+          <!-- Contador de imágenes -->
+          <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full">
+            {{ currentImageIndex + 1 }} / {{ galleryService.images.length }}
+          </div>
+        </div>
+
+        <!-- Botones de navegación -->
+        <button
+            v-if="galleryService.images.length > 1"
+            @click="prevImage"
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full"
+        >
+          <ChevronLeftIcon class="h-8 w-8" />
+        </button>
+        <button
+            v-if="galleryService.images.length > 1"
+            @click="nextImage"
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full"
+        >
+          <ChevronRightIcon class="h-8 w-8" />
+        </button>
+
+        <!-- Miniaturas -->
+        <div v-if="galleryService.images.length > 1" class="flex justify-center mt-4 space-x-2 overflow-x-auto">
+          <button
+              v-for="(image, index) in galleryService.images"
+              :key="image.id"
+              @click="currentImageIndex = index"
+              class="w-16 h-16 rounded-md overflow-hidden border-2 transition-all"
+              :class="currentImageIndex === index ? 'border-pink-500 opacity-100' : 'border-transparent opacity-70 hover:opacity-100'"
+          >
+            <img :src="image.url" :alt="`Miniatura ${index + 1}`" class="w-full h-full object-cover" />
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { ScissorsIcon, CheckIcon, XIcon, CalendarIcon } from 'lucide-vue-next';
+import {
+  ScissorsIcon,
+  CheckIcon,
+  XIcon,
+  CalendarIcon,
+  ImageIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
+} from 'lucide-vue-next';
 
 const router = useRouter();
 const selectedServices = ref([]);
 const showModal = ref(false);
+
+const showGallery = ref(false);
+const galleryService = ref(null);
+const currentImageIndex = ref(0);
 
 const services = ref([
   {
@@ -160,7 +248,10 @@ const services = ref([
     description: 'Corte personalizado según tu tipo de rostro y preferencias, incluye lavado y peinado básico.',
     duration: 45,
     price: 35,
-    image: '/placeholder.svg?height=400&width=600'
+    images: [
+      { id: 1, url: '/placeholder.svg?height=400&width=600', isPrimary: true },
+      { id: 2, url: '/placeholder.svg?height=400&width=600&text=Corte2', isPrimary: false }
+    ]
   },
   {
     id: 2,
@@ -168,7 +259,9 @@ const services = ref([
     description: 'Coloración completa con productos de alta calidad que cuidan tu cabello mientras le dan un color vibrante.',
     duration: 120,
     price: 65,
-    image: '/placeholder.svg?height=400&width=600'
+    images: [
+      { id: 3, url: '/placeholder.svg?height=400&width=600', isPrimary: true }
+    ]
   },
   {
     id: 3,
@@ -176,7 +269,9 @@ const services = ref([
     description: 'Tratamiento completo para tus uñas que incluye limado, cutículas, exfoliación, masaje y esmalte.',
     duration: 45,
     price: 25,
-    image: '/placeholder.svg?height=400&width=600'
+    images: [
+      { id: 4, url: '/placeholder.svg?height=400&width=600', isPrimary: true }
+    ]
   },
   {
     id: 4,
@@ -184,7 +279,9 @@ const services = ref([
     description: 'Tratamiento rejuvenecedor para tus pies que incluye remojo, exfoliación, limado, cutículas y esmalte.',
     duration: 60,
     price: 35,
-    image: '/placeholder.svg?height=400&width=600'
+    images: [
+      { id: 5, url: '/placeholder.svg?height=400&width=600', isPrimary: true }
+    ]
   },
   {
     id: 5,
@@ -192,7 +289,9 @@ const services = ref([
     description: 'Limpieza profunda, exfoliación, mascarilla personalizada y masaje facial para una piel radiante.',
     duration: 60,
     price: 55,
-    image: '/placeholder.svg?height=400&width=600'
+    images: [
+      { id: 6, url: '/placeholder.svg?height=400&width=600', isPrimary: true }
+    ]
   },
   {
     id: 6,
@@ -200,7 +299,9 @@ const services = ref([
     description: 'Aplicación pelo a pelo para lograr una mirada más intensa y definida de forma natural.',
     duration: 90,
     price: 80,
-    image: '/placeholder.svg?height=400&width=600'
+    images: [
+      { id: 7, url: '/placeholder.svg?height=400&width=600', isPrimary: true }
+    ]
   }
 ]);
 
@@ -248,6 +349,31 @@ const procederReserva = () => {
 
   // Cerrar el modal
   showModal.value = false;
+};
+
+// Obtener la imagen principal de un servicio
+const getPrimaryImage = (service) => {
+  const primaryImage = service.images.find(img => img.isPrimary);
+  return primaryImage ? primaryImage.url : service.images[0]?.url || '/placeholder.svg?height=400&width=600';
+};
+
+// Abrir la galería de imágenes
+const openGallery = (service) => {
+  galleryService.value = service;
+  currentImageIndex.value = 0;
+  showGallery.value = true;
+};
+
+// Navegar a la siguiente imagen
+const nextImage = () => {
+  if (!galleryService.value) return;
+  currentImageIndex.value = (currentImageIndex.value + 1) % galleryService.value.images.length;
+};
+
+// Navegar a la imagen anterior
+const prevImage = () => {
+  if (!galleryService.value) return;
+  currentImageIndex.value = (currentImageIndex.value - 1 + galleryService.value.images.length) % galleryService.value.images.length;
 };
 </script>
 

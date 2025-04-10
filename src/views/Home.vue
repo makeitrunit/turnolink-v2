@@ -173,8 +173,12 @@
                       class="flex justify-between items-center p-2 bg-pink-50 rounded-lg"
                   >
                     <div class="flex items-center">
-                      <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center mr-2">
-                        <ScissorsIcon class="h-4 w-4 text-pink-600" />
+                      <div class="w-10 h-10 overflow-hidden rounded-lg mr-3">
+                        <img
+                            :src="getPrimaryImage(service)"
+                            :alt="service.title"
+                            class="w-full h-full object-cover"
+                        />
                       </div>
                       <span class="font-medium">{{ service.title }}</span>
                     </div>
@@ -199,37 +203,57 @@
                 </div>
               </div>
 
-              <!-- Lista de servicios disponibles -->
-              <div class="space-y-3">
+              <!-- Lista de servicios disponibles (vista de lista con miniaturas) -->
+              <div class="space-y-4">
                 <div
                     v-for="service in availableServices"
                     :key="service.id"
-                    class="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center"
-                    :class="{ 'border-2 border-pink-500': isServiceSelected(service) }"
+                    class="bg-white rounded-lg shadow-sm overflow-hidden"
+                    :class="{ 'ring-2 ring-pink-500': isServiceSelected(service) }"
                 >
-                  <div class="flex items-center">
-                    <div class="w-12 h-12 bg-pink-100 rounded-lg overflow-hidden mr-4">
-                      <img :src="service.image" :alt="service.title" class="w-full h-full object-cover" />
+                  <div class="p-4 flex">
+                    <!-- Miniatura del servicio -->
+                    <div class="relative w-24 h-24 flex-shrink-0 mr-4">
+                      <img
+                          :src="getPrimaryImage(service)"
+                          :alt="service.title"
+                          class="w-full h-full object-cover rounded-md cursor-pointer"
+                          @click="openGallery(service)"
+                      />
+                      <div
+                          v-if="service.images && service.images.length > 1"
+                          class="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded-md flex items-center cursor-pointer"
+                          @click.stop="openGallery(service)"
+                      >
+                        <ImageIcon class="h-3 w-3 mr-1" />
+                        {{ service.images.length }}
+                      </div>
                     </div>
-                    <div>
-                      <h4 class="font-bold text-gray-800">{{ service.title }}</h4>
-                      <div class="flex items-center text-sm text-gray-600">
-                        <ClockIcon class="h-4 w-4 mr-1" />
-                        <span>{{ formatDuration(service.duration) }}</span>
-                        <span class="mx-2">•</span>
-                        <span class="font-medium text-pink-600">${{ service.price }}</span>
+
+                    <div class="flex-grow">
+                      <div class="flex justify-between items-start mb-2">
+                        <h4 class="text-lg font-bold text-gray-800">{{ service.title }}</h4>
+                        <span class="bg-pink-100 text-pink-800 text-sm font-medium px-3 py-1 rounded-full">
+                          {{ formatDuration(service.duration) }}
+                        </span>
+                      </div>
+
+                      <p class="text-gray-600 mb-4">{{ service.description }}</p>
+
+                      <div class="flex justify-between items-center">
+                        <span class="text-lg font-bold text-pink-600">${{ service.price }}</span>
+                        <button
+                            @click="toggleService(service)"
+                            class="py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                            :class="isServiceSelected(service)
+                            ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                            : 'bg-pink-600 text-white hover:bg-pink-700'"
+                        >
+                          {{ isServiceSelected(service) ? 'Quitar' : 'Agregar' }}
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <button
-                      @click="toggleService(service)"
-                      class="py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                      :class="isServiceSelected(service)
-                      ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                      : 'bg-pink-600 text-white hover:bg-pink-700'"
-                  >
-                    {{ isServiceSelected(service) ? 'Quitar' : 'Agregar' }}
-                  </button>
                 </div>
               </div>
 
@@ -323,14 +347,24 @@
 
                 <div class="mt-3 mb-2">
                   <p class="font-medium">Servicios:</p>
-                  <ul class="list-disc list-inside pl-2">
-                    <li v-for="service in selectedServices" :key="service.id">
-                      {{ service.title }} ({{ formatDuration(service.duration) }})
-                    </li>
-                  </ul>
+                  <div class="space-y-2 mt-2">
+                    <div v-for="service in selectedServices" :key="service.id" class="flex items-center">
+                      <div class="w-10 h-10 overflow-hidden rounded-lg mr-3">
+                        <img
+                            :src="getPrimaryImage(service)"
+                            :alt="service.title"
+                            class="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p class="font-medium">{{ service.title }}</p>
+                        <p class="text-sm text-gray-600">{{ formatDuration(service.duration) }} • ${{ service.price }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <p>Precio total: <span class="font-bold">${{ totalPrice }}</span></p>
+                <p class="mt-3">Precio total: <span class="font-bold">${{ totalPrice }}</span></p>
                 <p>Teléfono: {{ phone }}</p>
                 <p v-if="email">Email: {{ email }}</p>
               </div>
@@ -383,6 +417,89 @@
         </div>
       </div>
     </section>
+
+    <!-- Modal de Galería de Imágenes -->
+    <div
+        v-if="showGallery && galleryService"
+        class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+    >
+      <div class="relative w-full max-w-4xl">
+        <!-- Botón de cerrar -->
+        <button
+            @click="showGallery = false"
+            class="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+        >
+          <XIcon class="h-8 w-8" />
+        </button>
+
+        <!-- Imagen actual -->
+        <div class="relative">
+          <img
+              :src="galleryService.images[currentImageIndex].url"
+              :alt="galleryService.title"
+              class="w-full max-h-[80vh] object-contain"
+          />
+
+          <!-- Contador de imágenes -->
+          <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full">
+            {{ currentImageIndex + 1 }} / {{ galleryService.images.length }}
+          </div>
+        </div>
+
+        <!-- Botones de navegación -->
+        <button
+            v-if="galleryService.images.length > 1"
+            @click="prevImage"
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full"
+        >
+          <ChevronLeftIcon class="h-8 w-8" />
+        </button>
+        <button
+            v-if="galleryService.images.length > 1"
+            @click="nextImage"
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full"
+        >
+          <ChevronRightIcon class="h-8 w-8" />
+        </button>
+
+        <!-- Miniaturas -->
+        <div v-if="galleryService.images.length > 1" class="flex justify-center mt-4 space-x-2 overflow-x-auto">
+          <button
+              v-for="(image, index) in galleryService.images"
+              :key="image.id"
+              @click="currentImageIndex = index"
+              class="w-16 h-16 rounded-md overflow-hidden border-2 transition-all"
+              :class="currentImageIndex === index ? 'border-pink-500 opacity-100' : 'border-transparent opacity-70 hover:opacity-100'"
+          >
+            <img :src="image.url" :alt="`Miniatura ${index + 1}`" class="w-full h-full object-cover" />
+          </button>
+        </div>
+
+        <!-- Información del servicio -->
+        <div class="bg-white bg-opacity-90 p-4 mt-4 rounded-lg">
+          <h3 class="text-xl font-bold text-gray-800">{{ galleryService.title }}</h3>
+          <p class="text-gray-600 my-2">{{ galleryService.description }}</p>
+          <div class="flex justify-between items-center">
+            <div class="flex items-center">
+              <ClockIcon class="h-4 w-4 text-gray-600 mr-1" />
+              <span class="text-gray-600">{{ formatDuration(galleryService.duration) }}</span>
+            </div>
+            <span class="font-bold text-pink-600">${{ galleryService.price }}</span>
+          </div>
+          <div class="mt-3 flex justify-end">
+            <button
+                @click="toggleService(galleryService); showGallery = false"
+                class="py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                :class="isServiceSelected(galleryService)
+                ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                : 'bg-pink-600 text-white hover:bg-pink-700'"
+            >
+              {{ isServiceSelected(galleryService) ? 'Quitar del carrito' : 'Agregar al carrito' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -396,7 +513,8 @@ import {
   ScissorsIcon,
   XIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ImageIcon
 } from 'lucide-vue-next';
 
 // Step management
@@ -410,6 +528,11 @@ const selectedServices = ref([]);
 const phone = ref('');
 const email = ref('');
 const notes = ref('');
+
+// Gallery state
+const showGallery = ref(false);
+const galleryService = ref(null);
+const currentImageIndex = ref(0);
 
 // Date management
 const today = new Date();
@@ -464,7 +587,10 @@ const availableServices = ref([
     description: 'Corte personalizado según tu tipo de rostro y preferencias.',
     duration: 45,
     price: 35,
-    image: '/placeholder.svg?height=200&width=300'
+    images: [
+      { id: 1, url: '/placeholder.svg?height=200&width=300', isPrimary: true },
+      { id: 2, url: '/placeholder.svg?height=200&width=300&text=Corte2', isPrimary: false }
+    ]
   },
   {
     id: 2,
@@ -472,7 +598,11 @@ const availableServices = ref([
     description: 'Coloración completa con productos de alta calidad.',
     duration: 120,
     price: 65,
-    image: '/placeholder.svg?height=200&width=300'
+    images: [
+      { id: 3, url: '/placeholder.svg?height=200&width=300', isPrimary: true },
+      { id: 4, url: '/placeholder.svg?height=200&width=300&text=Color2', isPrimary: false },
+      { id: 5, url: '/placeholder.svg?height=200&width=300&text=Color3', isPrimary: false }
+    ]
   },
   {
     id: 3,
@@ -480,7 +610,9 @@ const availableServices = ref([
     description: 'Tratamiento completo para tus uñas.',
     duration: 45,
     price: 25,
-    image: '/placeholder.svg?height=200&width=300'
+    images: [
+      { id: 6, url: '/placeholder.svg?height=200&width=300', isPrimary: true }
+    ]
   },
   {
     id: 4,
@@ -488,7 +620,9 @@ const availableServices = ref([
     description: 'Tratamiento rejuvenecedor para tus pies.',
     duration: 60,
     price: 35,
-    image: '/placeholder.svg?height=200&width=300'
+    images: [
+      { id: 7, url: '/placeholder.svg?height=200&width=300', isPrimary: true }
+    ]
   },
   {
     id: 5,
@@ -496,7 +630,10 @@ const availableServices = ref([
     description: 'Limpieza profunda, exfoliación y mascarilla personalizada.',
     duration: 60,
     price: 55,
-    image: '/placeholder.svg?height=200&width=300'
+    images: [
+      { id: 8, url: '/placeholder.svg?height=200&width=300', isPrimary: true },
+      { id: 9, url: '/placeholder.svg?height=200&width=300&text=Facial2', isPrimary: false }
+    ]
   },
   {
     id: 6,
@@ -504,9 +641,21 @@ const availableServices = ref([
     description: 'Aplicación pelo a pelo para una mirada más intensa.',
     duration: 90,
     price: 80,
-    image: '/placeholder.svg?height=200&width=300'
+    images: [
+      { id: 10, url: '/placeholder.svg?height=200&width=300', isPrimary: true }
+    ]
   }
 ]);
+
+// Obtener la imagen principal de un servicio
+const getPrimaryImage = (service) => {
+  if (!service.images || service.images.length === 0) {
+    return '/placeholder.svg?height=200&width=300';
+  }
+
+  const primaryImage = service.images.find(img => img.isPrimary);
+  return primaryImage ? primaryImage.url : service.images[0].url;
+};
 
 // Computed properties
 const totalDuration = computed(() => {
@@ -676,6 +825,23 @@ const scrollToBooking = () => {
   document.getElementById('booking-section').scrollIntoView({
     behavior: 'smooth'
   });
+};
+
+// Gallery functions
+const openGallery = (service) => {
+  galleryService.value = service;
+  currentImageIndex.value = 0;
+  showGallery.value = true;
+};
+
+const nextImage = () => {
+  if (!galleryService.value || !galleryService.value.images) return;
+  currentImageIndex.value = (currentImageIndex.value + 1) % galleryService.value.images.length;
+};
+
+const prevImage = () => {
+  if (!galleryService.value || !galleryService.value.images) return;
+  currentImageIndex.value = (currentImageIndex.value - 1 + galleryService.value.images.length) % galleryService.value.images.length;
 };
 </script>
 

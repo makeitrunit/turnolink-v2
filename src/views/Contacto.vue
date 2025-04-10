@@ -5,12 +5,12 @@
       <p class="text-xl text-gray-600 text-center mb-12 max-w-3xl mx-auto">
         Estamos aquí para ayudarte. Contáctanos o visítanos en nuestra ubicación.
       </p>
-      
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <!-- Contact Information -->
         <div class="bg-white rounded-lg shadow-md p-8">
           <h2 class="text-2xl font-bold mb-6">Información de Contacto</h2>
-          
+
           <div class="space-y-6">
             <div class="flex items-start">
               <div class="bg-pink-100 p-3 rounded-full mr-4">
@@ -22,7 +22,7 @@
                 <p class="text-gray-600 mt-1">Referencia: Frente al parque central</p>
               </div>
             </div>
-            
+
             <div class="flex items-start">
               <div class="bg-pink-100 p-3 rounded-full mr-4">
                 <PhoneIcon class="h-6 w-6 text-pink-600" />
@@ -33,7 +33,7 @@
                 <p class="text-gray-600 mt-1">Lun-Vie: 9:00 - 20:00, Sáb: 10:00 - 18:00</p>
               </div>
             </div>
-            
+
             <div class="flex items-start">
               <div class="bg-pink-100 p-3 rounded-full mr-4">
                 <MailIcon class="h-6 w-6 text-pink-600" />
@@ -45,42 +45,42 @@
               </div>
             </div>
           </div>
-          
+
           <div class="mt-8">
             <h3 class="text-xl font-bold mb-4">Envíanos un mensaje</h3>
             <form class="space-y-4">
               <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                <input 
-                  id="name" 
-                  type="text" 
+                <input
+                  id="name"
+                  type="text"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   placeholder="Tu nombre"
                 />
               </div>
-              
+
               <div>
                 <label for="contact-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input 
-                  id="contact-email" 
-                  type="email" 
+                <input
+                  id="contact-email"
+                  type="email"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   placeholder="Tu email"
                 />
               </div>
-              
+
               <div>
                 <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
-                <textarea 
-                  id="message" 
+                <textarea
+                  id="message"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   rows="4"
                   placeholder="¿En qué podemos ayudarte?"
                 ></textarea>
               </div>
-              
-              <button 
-                type="submit" 
+
+              <button
+                type="submit"
                 class="bg-pink-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-pink-700 transition-colors"
               >
                 Enviar mensaje
@@ -88,7 +88,7 @@
             </form>
           </div>
         </div>
-        
+
         <!-- Map -->
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
           <h2 class="text-2xl font-bold p-6">Nuestra Ubicación</h2>
