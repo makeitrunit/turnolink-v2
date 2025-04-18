@@ -205,8 +205,9 @@
                       <UserIcon class="h-5 w-5 text-gray-500"/>
                     </div>
                     <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">{{ appointment.phone }}</div>
-                      <div class="text-sm text-gray-500">{{ appointment.email || 'No email' }}</div>
+                      <div class="text-sm font-medium text-gray-900">{{ appointment.client_name }}</div>
+                      <div class="text-sm font-medium text-gray-900">{{ appointment.client_phone }}</div>
+                      <div class="text-sm text-gray-500">{{ appointment.client_email || 'No email' }}</div>
                     </div>
                   </div>
                 </td>
@@ -216,20 +217,20 @@
                 </td>
                 <td class="px-6 py-4">
                   <div class="text-sm text-gray-900">
-                    {{ appointment.services.map(s => s.title).join(', ') }}
+                    {{ getServices(appointment.Services) }}
                   </div>
                   <div class="text-sm text-gray-500">
-                    {{ formatDuration(getTotalDuration(appointment.services)) }} •
-                    ${{ getTotalPrice(appointment.services) }}
+                    {{ formatDuration(getTotalDuration(appointment.Services)) }} •
+                    ${{ getTotalPrice(appointment.Services) }}
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span
                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
                         :class="{
-                        'bg-yellow-100 text-yellow-800': appointment.status === 'pending',
-                        'bg-green-100 text-green-800': appointment.status === 'confirmed',
-                        'bg-red-100 text-red-800': appointment.status === 'cancelled'
+                        'bg-yellow-100 text-yellow-800': appointment.status === 'pendiente',
+                        'bg-green-100 text-green-800': appointment.status === 'aceptado',
+                        'bg-red-100 text-red-800': appointment.status === 'cancelado'
                       }"
                     >
                       {{ getStatusText(appointment.status) }}
@@ -245,7 +246,7 @@
                       <EyeIcon class="h-5 w-5"/>
                     </button>
                     <button
-                        v-if="appointment.status === 'pending'"
+                        v-if="appointment.status === 'pendiente'"
                         @click="confirmAppointment(appointment)"
                         class="text-green-600 hover:text-green-900"
                         title="Confirmar cita"
@@ -253,7 +254,7 @@
                       <CheckIcon class="h-5 w-5"/>
                     </button>
                     <button
-                        v-if="appointment.status !== 'cancelled'"
+                        v-if="appointment.status !== 'cancelado'"
                         @click="cancelAppointment(appointment)"
                         class="text-red-600 hover:text-red-900"
                         title="Cancelar cita"
@@ -348,14 +349,14 @@
                       :key="appointment.id"
                       class="text-xs p-1 rounded truncate cursor-pointer"
                       :class="{
-                      'bg-yellow-100 text-yellow-800': appointment.status === 'pending',
-                      'bg-green-100 text-green-800': appointment.status === 'confirmed',
-                      'bg-red-100 text-red-800': appointment.status === 'cancelled'
+                      'bg-yellow-100 text-yellow-800': appointment.status === 'pendiente',
+                      'bg-green-100 text-green-800': appointment.status === 'aceptado',
+                      'bg-red-100 text-red-800': appointment.status === 'cancelado'
                     }"
                       @click="viewAppointmentDetails(appointment)"
                   >
-                    {{ appointment.time }} - {{ appointment.services[0].title }}
-                    <span v-if="appointment.services.length > 1">+{{ appointment.services.length - 1 }}</span>
+                    {{ appointment.time }} - {{ appointment.Services[0].title }}
+                    <span v-if="appointment.Services.length > 1">+{{ appointment.Services.length - 1 }}</span>
                   </div>
                 </div>
               </div>
@@ -519,9 +520,9 @@
               <span
                   class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                   :class="{
-                  'bg-yellow-100 text-yellow-800': selectedAppointment.status === 'pending',
-                  'bg-green-100 text-green-800': selectedAppointment.status === 'confirmed',
-                  'bg-red-100 text-red-800': selectedAppointment.status === 'cancelled'
+                  'bg-yellow-100 text-yellow-800': selectedAppointment.status === 'pendiente',
+                  'bg-green-100 text-green-800': selectedAppointment.status === 'aceptado',
+                  'bg-red-100 text-red-800': selectedAppointment.status === 'cancelado'
                 }"
               >
                 {{ getStatusText(selectedAppointment.status) }}
@@ -530,14 +531,14 @@
 
             <div class="flex space-x-2">
               <button
-                  v-if="selectedAppointment.status === 'pending'"
+                  v-if="selectedAppointment.status === 'pendiente'"
                   @click="confirmAppointment(selectedAppointment); showAppointmentModal = false"
                   class="bg-green-600 text-white py-1 px-3 rounded text-sm font-medium hover:bg-green-700"
               >
                 Confirmar
               </button>
               <button
-                  v-if="selectedAppointment.status !== 'cancelled'"
+                  v-if="selectedAppointment.status !== 'cancelado'"
                   @click="cancelAppointment(selectedAppointment); showAppointmentModal = false"
                   class="bg-red-600 text-white py-1 px-3 rounded text-sm font-medium hover:bg-red-700"
               >
@@ -559,15 +560,16 @@
 
           <div>
             <p class="text-sm text-gray-500">Cliente</p>
-            <p class="font-medium">{{ selectedAppointment.phone }}</p>
-            <p v-if="selectedAppointment.email" class="text-sm text-gray-600">{{ selectedAppointment.email }}</p>
+            <p><span class="font-medium">Nombre</span>: <span class="text-sm text-gray-500">{{ selectedAppointment.client_name }}</span></p>
+            <p><span class="font-medium">Telefono</span>: <span class="text-sm text-gray-500">{{ selectedAppointment.client_phone }}</span></p>
+            <p v-if="selectedAppointment.client_email"><span class="font-medium">Correo</span>: <span class="text-sm text-gray-500">{{ selectedAppointment.client_email }}</span></p>
           </div>
 
           <div>
             <p class="text-sm text-gray-500 mb-2">Servicios</p>
             <div class="space-y-2">
               <div
-                  v-for="service in selectedAppointment.services"
+                  v-for="service in selectedAppointment.Services"
                   :key="service.id"
                   class="flex justify-between items-center p-2 bg-gray-50 rounded"
               >
@@ -581,11 +583,11 @@
             <div class="flex justify-between items-center mt-3 pt-2 border-t border-gray-200">
               <div>
                 <span class="text-sm text-gray-500">Duración total:</span>
-                <span class="ml-1">{{ formatDuration(getTotalDuration(selectedAppointment.services)) }}</span>
+                <span class="ml-1">{{ formatDuration(getTotalDuration(selectedAppointment.Services)) }}</span>
               </div>
               <div>
                 <span class="text-sm text-gray-500">Total:</span>
-                <span class="ml-1 font-bold">${{ getTotalPrice(selectedAppointment.services) }}</span>
+                <span class="ml-1 font-bold">${{ getTotalPrice(selectedAppointment.Services) }}</span>
               </div>
             </div>
           </div>
@@ -597,7 +599,6 @@
         </div>
       </div>
     </div>
-    selectedAppointment.notes}}
   </div>
 
 
@@ -819,7 +820,7 @@ import {
   ImageIcon,
   StarIcon
 } from 'lucide-vue-next';
-
+import {getAppointments, updateStatus} from "@/axios/appointments.js";
 // Authentication state
 const isAuthenticated = ref(false);
 const isLoggingIn = ref(false);
@@ -1024,9 +1025,9 @@ const stats = computed(() => {
     return appointmentDate.getTime() === today.getTime();
   }).length;
 
-  const pendingAppointments = appointments.value.filter(a => a.status === 'pending').length;
-  const confirmedAppointments = appointments.value.filter(a => a.status === 'confirmed').length;
-  const cancelledAppointments = appointments.value.filter(a => a.status === 'cancelled').length;
+  const pendingAppointments = appointments.value.filter(a => a.status === 'pendiente').length;
+  const confirmedAppointments = appointments.value.filter(a => a.status === 'aceptado').length;
+  const cancelledAppointments = appointments.value.filter(a => a.status === 'cancelado').length;
 
   return {
     todayAppointments,
@@ -1141,24 +1142,27 @@ const viewAppointmentDetails = (appointment) => {
 const confirmAppointment = (appointment) => {
   const index = appointments.value.findIndex(a => a.id === appointment.id);
   if (index !== -1) {
-    appointments.value[index].status = 'confirmed';
+    appointments.value[index].status = 'aceptado';
   }
+
+  updateStatus(appointment.id, "aceptado");
 };
 
 const cancelAppointment = (appointment) => {
   const index = appointments.value.findIndex(a => a.id === appointment.id);
   if (index !== -1) {
-    appointments.value[index].status = 'cancelled';
+    appointments.value[index].status = 'cancelado';
   }
+  updateStatus(appointment.id, "cancelado");
 };
 
 const getStatusText = (status) => {
   switch (status) {
-    case 'pending':
+    case 'pendiente':
       return 'Pendiente';
-    case 'confirmed':
+    case 'aceptado':
       return 'Confirmada';
-    case 'cancelled':
+    case 'cancelado':
       return 'Cancelada';
     default:
       return status;
@@ -1257,11 +1261,18 @@ const formatDuration = (minutes) => {
 };
 
 const getTotalDuration = (services) => {
+  if (!services) return ``;
   return services.reduce((total, service) => total + service.duration, 0);
 };
 
+const getServices = (services) => {
+  if (!services) return ``;
+  return services.map(s => s.title).join(', ');
+};
+
 const getTotalPrice = (services) => {
-  return services.reduce((total, service) => total + service.price, 0);
+  if (!services) return 0;
+  return services.reduce((total, service) => total + parseFloat(service.price), 0);
 };
 
 // Actualizar la estructura de datos de servicios para soportar múltiples imágenes
@@ -1270,10 +1281,11 @@ const showImageModal = ref(false);
 const imagePreview = ref('');
 
 // Initialize
-onMounted(() => {
+onMounted(async () => {
   // For demo purposes, auto-login
   // In a real app, you would check for a stored token or session
-  // isAuthenticated.value = true;
+  isAuthenticated.value = true;
+  appointments.value = await getAppointments();
 });
 
 const addImage = () => {
